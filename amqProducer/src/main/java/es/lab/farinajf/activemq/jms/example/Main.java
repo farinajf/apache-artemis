@@ -27,7 +27,7 @@ public class Main {
         try
         {
             //0.-
-            final Queue q = ActiveMQJMSClient.createQueue("peticiones");
+            final Queue q = ActiveMQJMSClient.createQueue("peticiones::q1");
 
             //1.- Creamos la Factoria de conexion
             final ConnectionFactory cf = new ActiveMQJMSConnectionFactory("tcp://localhost:61616");
