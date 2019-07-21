@@ -19,14 +19,15 @@ import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
  * @author fran
  */
 public class Main {
+    private static final int _TIMEOUT_SLEEP = 1000;
+
     public static void main(String[] args) throws Exception {
-        Connection c    = null;
-        boolean    stop = false;
+        Connection c = null;
 
         try
         {
             //0.- Engancha con el destino (Queue)
-            final Queue q = ActiveMQJMSClient.createQueue("queue00");
+            final Queue q = ActiveMQJMSClient.createQueue("peticiones");
 
             //1.- Creamos la Factoria de conexion
             final ConnectionFactory cf = new ActiveMQJMSConnectionFactory("tcp://localhost:61616");
@@ -42,7 +43,7 @@ public class Main {
             //4.- Crea un consumidor
             final MessageConsumer mc = s.createConsumer(q);
 
-            while (stop == false)
+            while (true)
             {
                 //5.- Recibe el mensaje
                 final TextMessage m = (TextMessage) mc.receive(5000);
@@ -51,10 +52,10 @@ public class Main {
                 else
                 {
                     System.out.println("Recibido ------------> NULL.");
-                    stop = true;
+                    break;
                 }
 
-                Thread.currentThread().sleep(5000);
+                Thread.currentThread().sleep(_TIMEOUT_SLEEP);
             }
         }
         finally
