@@ -19,7 +19,7 @@ import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
  * @author fran
  */
 public class Main {
-    private static final int MAX = 10;
+    private static final int MAX = 1;
 
     public static void main(String[] args) throws Exception {
         Connection c = null;
@@ -27,7 +27,7 @@ public class Main {
         try
         {
             //0.-
-            final Queue q = ActiveMQJMSClient.createQueue("queue00");
+            final Queue q = ActiveMQJMSClient.createQueue("peticiones");
 
             //1.- Creamos la Factoria de conexion
             final ConnectionFactory cf = new ActiveMQJMSConnectionFactory("tcp://localhost:61616");
