@@ -11,7 +11,6 @@ import javax.jms.MessageConsumer;
 import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import org.apache.activemq.artemis.api.jms.ActiveMQJMSClient;
 import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
 
 /**
@@ -19,26 +18,37 @@ import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
  * @author fran
  */
 public class Main {
-    private static final int _TIMEOUT_SLEEP = 1000;
+    private static final int _TIMEOUT_RECEIVE = 1000;
+    private static final int _TIMEOUT_SLEEP   = 1000;
 
     public static void main(String[] args) throws Exception {
-        Connection c = null;
+        final String QUEUE_NAME;
+        final String host = "localhost";
+        final String port = "61616";
+        Connection   c    = null;
+
+        if (args.length != 1)
+        {
+            System.err.println("Consumer args: <queue_name>");
+
+            System.exit(1);
+        }
+
+        QUEUE_NAME =args[0];
 
         try
         {
-            //0.- Engancha con el destino (Queue)
-            final Queue q = ActiveMQJMSClient.createQueue("peticiones::q1");
+            //0.-
+            final ConnectionFactory cf = new ActiveMQJMSConnectionFactory("tcp://" + host + ":" + port);
 
-            //1.- Creamos la Factoria de conexion
-            final ConnectionFactory cf = new ActiveMQJMSConnectionFactory("tcp://localhost:61616");
-
-            //2.- Crea una conexion JMS
+            //1
             c = cf.createConnection();
 
-            c.start();
-
-            //3.- Crea la sesion
+            //2.- Crea la sesion
             final Session s = c.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+            //3.- Se subscribe a la cola
+            final Queue q = s.createQueue(QUEUE_NAME);
 
             //4.- Crea un consumidor
             final MessageConsumer mc = s.createConsumer(q);
@@ -46,7 +56,7 @@ public class Main {
             while (true)
             {
                 //5.- Recibe el mensaje
-                final TextMessage m = (TextMessage) mc.receive(5000);
+                final TextMessage m = (TextMessage) mc.receive(_TIMEOUT_RECEIVE);
 
                 if (m != null) System.out.println("Recibido ------------> " + m.getText());
                 else
