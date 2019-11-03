@@ -62,7 +62,6 @@ public class Main {
                 else
                 {
                     System.out.println("Recibido ------------> NULL.");
-                    break;
                 }
 
                 Thread.currentThread().sleep(_TIMEOUT_SLEEP);
