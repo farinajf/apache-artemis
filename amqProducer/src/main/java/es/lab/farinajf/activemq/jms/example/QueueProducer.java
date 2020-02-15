@@ -18,7 +18,7 @@ import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
  *
  * @author fran
  */
-public class Main {
+public class QueueProducer {
     private static final int MAX = 1;
 
     public static void main(String[] args) throws Exception {
