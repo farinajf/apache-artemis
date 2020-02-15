@@ -21,16 +21,39 @@ import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
 public class QueueProducer {
     private static final int MAX = 1;
 
+    /**
+     *
+     * @return
+     */
+    private static String _getURL() {
+        return "tcp://localhost:61616" + "?ha=true&retryInterval=1000&retryIntervalMultiplier=1.0&reconnectAtempts=-1";
+    }
+
+    /**
+     *
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         Connection c = null;
+
+        if (args.length != 2)
+        {
+            System.err.println("\t Ejecuta: QueueProducer <nombreCola> <timeout-ms>");
+            System.exit(1);
+        }
+
+        int timeout = Integer.parseInt(args[1]);
 
         try
         {
             //0.-
-            final Queue q = ActiveMQJMSClient.createQueue("peticiones::q1");
+            final Queue q = ActiveMQJMSClient.createQueue(args[0]);
 
             //1.- Creamos la Factoria de conexion
-            final ConnectionFactory cf = new ActiveMQJMSConnectionFactory("tcp://localhost:61616");
+            final String URI_AMQ = _getURL();
+            System.out.println("Conectando: " + URI_AMQ);
+            final ConnectionFactory cf = new ActiveMQJMSConnectionFactory(URI_AMQ);
 
             //2.- Crea una conexion JMS
             c = cf.createConnection();
@@ -54,6 +77,8 @@ public class QueueProducer {
 
                 //6 Envia el mensaje
                 p.send(m);
+
+                Thread.currentThread().sleep(timeout);
             }
         }
         finally
