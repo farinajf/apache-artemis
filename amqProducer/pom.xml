@@ -21,4 +21,7 @@
         </dependency>
     </dependencies>
     <name>amqProducer</name>
+    <build>
+        
+    </build>
 </project>
