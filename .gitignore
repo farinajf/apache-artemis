@@ -1,3 +1,5 @@
 /artemis-rest/target/
 /topicConsumer/target/
 /topicProducer/target/
+/topicDurableConsumer/target/
+/topicSharedDurableConsumer/target/

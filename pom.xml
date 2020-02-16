@@ -16,5 +16,7 @@
         <module>artemis-rest</module>
         <module>topicProducer</module>
         <module>topicConsumer</module>
+        <module>topicDurableConsumer</module>
+        <module>topicSharedDurableConsumer</module>
     </modules>
 </project>
