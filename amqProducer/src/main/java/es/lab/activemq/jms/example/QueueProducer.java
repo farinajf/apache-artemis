@@ -19,7 +19,8 @@ import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
  * @author fran
  */
 public class QueueProducer {
-    private static final int MAX = 1;
+    private static final int _NUM_MENSAJES = 1;
+    private static final int _TIMEOUT      = 1000;
 
     /**
      *
@@ -35,15 +36,32 @@ public class QueueProducer {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-        Connection c = null;
+        Connection c           = null;
+        int        numMensajes = _NUM_MENSAJES;
+        int        timeout     = _TIMEOUT;
 
-        if (args.length != 2)
+        if (args.length < 1)
         {
-            System.err.println("\t Ejecuta: QueueProducer <nombreCola> <timeout-ms>");
+            System.err.println("\t Ejecuta: QueueProducer <nombreCola> <numMensajes> <timeout-ms>");
             System.exit(1);
         }
 
-        int timeout = Integer.parseInt(args[1]);
+        switch (args.length)
+        {
+            case 2:
+                    numMensajes = Integer.parseInt(args[1]);
+                    break;
+            case 3:
+                    numMensajes = Integer.parseInt(args[1]);
+                    timeout     = Integer.parseInt(args[2]);
+                    break;
+            default: break;
+        }
+
+        System.out.println("Parametros:");
+        System.out.println("\t - cola:          " + args[0]);
+        System.out.println("\t - num. mensajes: " + numMensajes);
+        System.out.println("\t - timeout:       " + timeout);
 
         try
         {
@@ -68,7 +86,7 @@ public class QueueProducer {
             final MessageProducer p = s.createProducer(q);
 
 
-            for (int i = 0; i < MAX; i++)
+            for (int i = 0; i < numMensajes; i++)
             {
                 //5.- Crea el mensaje de texto
                 final TextMessage m = s.createTextMessage("Mensaje " + i + ".");

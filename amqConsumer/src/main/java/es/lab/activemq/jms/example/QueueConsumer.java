@@ -43,7 +43,8 @@ public class QueueConsumer {
 
         switch (args.length)
         {
-            case 2: timeoutSleep   = Integer.parseInt(args[1]);
+            case 2:
+                    timeoutSleep   = Integer.parseInt(args[1]);
                     timeoutReceive = timeoutSleep;
                     break;
             case 3:
@@ -52,6 +53,11 @@ public class QueueConsumer {
                     break;
             default: break;
         }
+
+        System.out.println("Parametros:");
+        System.out.println("\t - cola:            " + args[0]);
+        System.out.println("\t - timeout-sleep:   " + timeoutSleep);
+        System.out.println("\t - timeout-receive: " + timeoutReceive);
 
         try
         {
