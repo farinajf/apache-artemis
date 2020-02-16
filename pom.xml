@@ -14,5 +14,7 @@
         <module>amqProducer</module>
         <module>amqConsumer</module>
         <module>artemis-rest</module>
+        <module>topicProducer</module>
+        <module>topicConsumer</module>
     </modules>
 </project>
