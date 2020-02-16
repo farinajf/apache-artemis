@@ -37,7 +37,7 @@ public class TopicProducer {
 
         if (args.length < 1)
         {
-            System.err.println("\t Ejecuta: QueueProducer <nombreCola> <numMensajes> <timeout-ms>");
+            System.err.println("\t Ejecuta: TopicProducer <nombreTopic> <numMensajes> <timeout-ms>");
             System.exit(1);
         }
 
