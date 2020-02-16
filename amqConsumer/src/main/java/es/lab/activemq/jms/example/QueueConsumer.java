@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package es.lab.farinajf.activemq.jms.example;
+package es.lab.activemq.jms.example;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -17,7 +17,7 @@ import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
  *
  * @author fran
  */
-public class Main {
+public class QueueConsumer {
     private static final int _TIMEOUT_RECEIVE = 1000;
     private static final int _TIMEOUT_SLEEP   = 1000;
 
