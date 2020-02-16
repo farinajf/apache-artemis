@@ -47,7 +47,7 @@ public class QueueProducer {
 
         try
         {
-            //0.-
+            //0.- Engancha con el destino
             final Queue q = ActiveMQJMSClient.createQueue(args[0]);
 
             //1.- Creamos la Factoria de conexion
