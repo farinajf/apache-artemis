@@ -27,7 +27,7 @@ public class QueueProducer {
      * @return
      */
     private static String _getURL() {
-        return "tcp://localhost:61616" + "?ha=true&retryInterval=1000&retryIntervalMultiplier=1.0&reconnectAtempts=-1";
+        return "tcp://localhost:61616" + "?ha=true&retryInterval=1000&retryIntervalMultiplier=1.0&reconnectAttempts=-1";
     }
 
     /**
@@ -84,7 +84,6 @@ public class QueueProducer {
 
             //4.- Crea un Productor
             final MessageProducer p = s.createProducer(q);
-
 
             for (int i = 0; i < numMensajes; i++)
             {

@@ -27,7 +27,7 @@ public class QueueConsumer {
      * @return
      */
     private static String _getURL() {
-        return "tcp://localhost:61616" + "?ha=true&retryInterval=1000&retryIntervalMultiplier=1.0&reconnectAtempts=-1";
+        return "tcp://localhost:61616" + "?ha=true&retryInterval=1000&retryIntervalMultiplier=1.0&reconnectAttempts=-1";
     }
 
     public static void main(String[] args) throws Exception {
