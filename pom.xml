@@ -18,5 +18,6 @@
         <module>topicConsumer</module>
         <module>topicDurableConsumer</module>
         <module>topicSharedDurableConsumer</module>
+        <module>topicAMQPConsumer</module>
     </modules>
 </project>

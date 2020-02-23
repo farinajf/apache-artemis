@@ -36,7 +36,7 @@ public class TopicSharedDurableConsumer {
         int                       timeoutSleep   = _TIMEOUT_SLEEP;
         int                       timeoutReceive = _TIMEOUT_RECEIVE;
 
-        if (args.length < 3)
+        if (args.length < 2)
         {
             System.err.println("Ejecuta: TopicSharedDurableConsumer <nombreTopic> <subscriptionName> <clientId> <timeoutSleep> <timeoutReceive>");
             System.exit(1);

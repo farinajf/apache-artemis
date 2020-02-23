@@ -3,18 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package es.lab.activemq.jms.topic;
+package es.lab.activemq.amqp.topic;
 
-import javax.jms.ConnectionFactory;
-import javax.jms.TextMessage;
-import org.apache.activemq.artemis.api.jms.ActiveMQJMSClient;
-import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
+import org.apache.qpid.jms.JmsConnectionFactory;
 
 /**
  *
  * @author fran
  */
-public class TopicConsumer {
+public class AMQPTopicConsumer {
     private static final int _TIMEOUT_RECEIVE = 1000;
     private static final int _TIMEOUT_SLEEP   = 1000;
 
@@ -23,13 +20,12 @@ public class TopicConsumer {
      * @return
      */
     private static String _getURL() {
-        return "tcp://localhost:61616" + "?ha=true&retryInterval=1000&retryIntervalMultiplier=1.0&reconnectAttempts=-1";
+        return "amqp://localhost:61616" + "?ha=true&retryInterval=1000&retryIntervalMultiplier=1.0&reconnectAttempts=-1";
     }
 
     /**
      *
      * @param args
-     * @throws Exception
      */
     public static void main(String[] args) throws Exception {
         javax.jms.Connection c              = null;
@@ -63,12 +59,12 @@ public class TopicConsumer {
         try
         {
             //0.- Engancha con el destino
-            final javax.jms.Topic t = ActiveMQJMSClient.createTopic(args[0]);
+            //final javax.jms.Topic t = ActiveMQJMSClient.createTopic(args[0]);
 
             //1.- Creamos la Factoria de conexion
             final String URI_AMQ = _getURL();
             System.out.println("Conectando: " + URI_AMQ);
-            final ConnectionFactory cf = new ActiveMQJMSConnectionFactory(URI_AMQ);
+            final javax.jms.ConnectionFactory cf = new JmsConnectionFactory(URI_AMQ);
 
             //2.- Crea una conexion JMS
             c = cf.createConnection();
@@ -78,13 +74,16 @@ public class TopicConsumer {
             //3.- Crea una sesion
             final javax.jms.Session s = c.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE);
 
-            //4.- Crea un Consumidor
+            //4.- Enganchamos con el destino
+            final javax.jms.Topic t = s.createTopic(args[0]);
+
+            //5.- Crea un Consumidor
             final javax.jms.MessageConsumer mc = s.createConsumer(t);
 
             while (true)
             {
                 //5.- Recibe el mensaje
-                final javax.jms.TextMessage m = (TextMessage) mc.receive(timeoutReceive);
+                final javax.jms.TextMessage m = (javax.jms.TextMessage) mc.receive(timeoutReceive);
 
                 if (m != null) System.out.println("Recibido ------------> " + m.getText());
                 else
@@ -97,7 +96,7 @@ public class TopicConsumer {
         }
         finally
         {
-            if (c!= null) c.close();
+            if (c != null) c.close();
         }
     }
 }

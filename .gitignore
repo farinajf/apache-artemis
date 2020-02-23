@@ -3,3 +3,4 @@
 /topicProducer/target/
 /topicDurableConsumer/target/
 /topicSharedDurableConsumer/target/
+/topicAMQPConsumer/target/
