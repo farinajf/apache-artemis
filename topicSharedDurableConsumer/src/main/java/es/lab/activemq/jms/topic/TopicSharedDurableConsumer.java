@@ -33,37 +33,31 @@ public class TopicSharedDurableConsumer {
     public static void main(String[] args) throws Exception {
         javax.jms.Connection      c              = null;
         javax.jms.MessageConsumer mc             = null;
+        String                    username       = null;
+        String                    password       = null;
         int                       timeoutSleep   = _TIMEOUT_SLEEP;
         int                       timeoutReceive = _TIMEOUT_RECEIVE;
 
         if (args.length < 2)
         {
-            System.err.println("Ejecuta: TopicSharedDurableConsumer <nombreTopic> <subscriptionName> <clientId> <timeoutSleep> <timeoutReceive>");
+            System.err.println("Ejecuta: TopicSharedDurableConsumer <nombreTopic> <subscriptionName> <timeoutSleep> <timeoutReceive> <username> <password>");
             System.exit(1);
         }
 
         final String subscriptionName = args[1];
-        final String clientId = (args.length > 2) ? args[2] : null;
 
-        switch (args.length)
-        {
-            case 4:
-                    timeoutSleep   = Integer.parseInt(args[3]);
-                    timeoutReceive = timeoutSleep;
-                    break;
-            case 5:
-                    timeoutSleep   = Integer.parseInt(args[3]);
-                    timeoutReceive = Integer.parseInt(args[4]);
-                    break;
-            default: break;
-        }
+        if (args.length >= 3) timeoutSleep   = Integer.parseInt(args[2]);
+        if (args.length >= 4) timeoutReceive = Integer.parseInt(args[3]);
+        if (args.length >= 5) username       = args[4];
+        if (args.length >= 6) password       = args[5];
 
         System.out.println("Parametros:");
         System.out.println("\t - topic:            " + args[0]);
-        System.out.println("\t - clientId:         " + clientId);
         System.out.println("\t - subscriptionName: " + subscriptionName);
         System.out.println("\t - timeout-sleep:    " + timeoutSleep);
         System.out.println("\t - timeout-receive:  " + timeoutReceive);
+        System.out.println("\t - username:         " + username);
+        System.out.println("\t - password:         " + password);
 
         try
         {
@@ -76,10 +70,10 @@ public class TopicSharedDurableConsumer {
             final javax.jms.ConnectionFactory cf = new ActiveMQJMSConnectionFactory(URI_AMQ);
 
             //2.- Crea una conexion JMS
-            c = cf.createConnection();
+            c = cf.createConnection(username, password);
 
             //3.- Se establece el clientId de la conexion
-            if (clientId != null) c.setClientID(clientId);
+            //if (clientId != null) c.setClientID(clientId);
 
             //4.- Se inicia la conexion
             c.start();

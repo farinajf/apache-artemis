@@ -33,30 +33,24 @@ public class TopicDurableConsumer {
     public static void main(String[] args) throws Exception {
         javax.jms.Connection      c              = null;
         javax.jms.MessageConsumer mc             = null;
+        String                    username       = null;
+        String                    password       = null;
         int                       timeoutSleep   = _TIMEOUT_SLEEP;
         int                       timeoutReceive = _TIMEOUT_RECEIVE;
 
         if (args.length < 3)
         {
-            System.err.println("Ejecuta: TopicDurableConsumer <nombreTopic> <subscriptionName> <clientId> <timeoutSleep> <timeoutReceive>");
+            System.err.println("Ejecuta: TopicDurableConsumer <nombreTopic> <subscriptionName> <clientId> <timeoutSleep> <timeoutReceive> <username> <password>");
             System.exit(1);
         }
 
         final String subscriptionName = args[1];
         final String clientId         = args[2];
 
-        switch (args.length)
-        {
-            case 4:
-                    timeoutSleep   = Integer.parseInt(args[3]);
-                    timeoutReceive = timeoutSleep;
-                    break;
-            case 5:
-                    timeoutSleep   = Integer.parseInt(args[3]);
-                    timeoutReceive = Integer.parseInt(args[4]);
-                    break;
-            default: break;
-        }
+        if (args.length >= 4) timeoutSleep   = Integer.parseInt(args[3]);
+        if (args.length >= 5) timeoutReceive = Integer.parseInt(args[4]);
+        if (args.length >= 6) username       = args[5];
+        if (args.length >= 7) password       = args[6];
 
         System.out.println("Parametros:");
         System.out.println("\t - topic:            " + args[0]);
@@ -64,6 +58,8 @@ public class TopicDurableConsumer {
         System.out.println("\t - subscriptionName: " + subscriptionName);
         System.out.println("\t - timeout-sleep:    " + timeoutSleep);
         System.out.println("\t - timeout-receive:  " + timeoutReceive);
+        System.out.println("\t - username:         " + username);
+        System.out.println("\t - password:         " + password);
 
         try
         {
@@ -76,7 +72,7 @@ public class TopicDurableConsumer {
             final javax.jms.ConnectionFactory cf = new ActiveMQJMSConnectionFactory(URI_AMQ);
 
             //2.- Crea una conexion JMS
-            c = cf.createConnection();
+            c = cf.createConnection(username, password);
 
             //3.- Se establece el clientId de la conexion
             c.setClientID(clientId);
