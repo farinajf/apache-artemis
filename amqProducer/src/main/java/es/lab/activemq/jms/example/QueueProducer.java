@@ -5,7 +5,6 @@
  */
 package es.lab.activemq.jms.example;
 
-import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
@@ -36,32 +35,29 @@ public class QueueProducer {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-        Connection c           = null;
-        int        numMensajes = _NUM_MENSAJES;
-        int        timeout     = _TIMEOUT;
+        javax.jms.Connection c           = null;
+        String               username    = null;
+        String               password    = null;
+        int                  numMensajes = _NUM_MENSAJES;
+        int                  timeout     = _TIMEOUT;
 
         if (args.length < 1)
         {
-            System.err.println("\t Ejecuta: QueueProducer <nombreCola> <numMensajes> <timeout-ms>");
+            System.err.println("\t Ejecuta: QueueProducer <nombreCola> <numMensajes> <timeout-ms> <username> <password>");
             System.exit(1);
         }
 
-        switch (args.length)
-        {
-            case 2:
-                    numMensajes = Integer.parseInt(args[1]);
-                    break;
-            case 3:
-                    numMensajes = Integer.parseInt(args[1]);
-                    timeout     = Integer.parseInt(args[2]);
-                    break;
-            default: break;
-        }
+        if (args.length >= 2) numMensajes = Integer.parseInt(args[1]);
+        if (args.length >= 3) timeout     = Integer.parseInt(args[2]);
+        if (args.length >= 4) username    = args[3];
+        if (args.length >= 5) password    = args[4];
 
         System.out.println("Parametros:");
         System.out.println("\t - cola:          " + args[0]);
         System.out.println("\t - num. mensajes: " + numMensajes);
         System.out.println("\t - timeout:       " + timeout);
+        System.out.println("\t - username:      " + username);
+        System.out.println("\t - password:      " + password);
 
         try
         {
@@ -74,7 +70,7 @@ public class QueueProducer {
             final ConnectionFactory cf = new ActiveMQJMSConnectionFactory(URI_AMQ);
 
             //2.- Crea una conexion JMS
-            c = cf.createConnection();
+            c = cf.createConnection(username, password);
 
             c.start();
 
