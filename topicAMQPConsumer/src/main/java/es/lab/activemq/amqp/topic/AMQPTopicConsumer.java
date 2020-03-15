@@ -20,7 +20,8 @@ public class AMQPTopicConsumer {
      * @return
      */
     private static String _getURL() {
-        return "amqp://localhost:61616" + "?ha=true&retryInterval=1000&retryIntervalMultiplier=1.0&reconnectAttempts=-1";
+        return "failover:(amqp://localhost:61616,amqp://localhost:61616)?"
+                + "failover.maxReconnectAttempts=20";
     }
 
     /**
