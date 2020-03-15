@@ -16,12 +16,14 @@ public class AMQPTopicConsumer {
     private static final int _TIMEOUT_SLEEP   = 1000;
 
     /**
-     *
+     * https://qpid.apache.org/releases/qpid-jms-0.24.0/docs/index.html
+     * 
      * @return
      */
     private static String _getURL() {
         return "failover:(amqp://localhost:61616,amqp://localhost:61616)?"
-                + "failover.maxReconnectAttempts=20";
+                + "failover.reconnectDelay=100&"
+                + "failover.maxReconnectAttempts=-1";
     }
 
     /**
