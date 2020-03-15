@@ -29,32 +29,28 @@ public class AMQPTopicConsumer {
      */
     public static void main(String[] args) throws Exception {
         javax.jms.Connection c              = null;
+        String               username       = null;
+        String               password       = null;
         int                  timeoutSleep   = _TIMEOUT_SLEEP;
         int                  timeoutReceive = _TIMEOUT_RECEIVE;
 
         if (args.length < 1)
         {
-            System.err.println("Ejecuta: TopicConsumer <nombreTopic> <timeoutSleep> <timeoutReceive>");
+            System.err.println("Ejecuta: AMQPTopicConsumer <nombreTopic> <timeoutSleep> <timeoutReceive> <username> <password>");
             System.exit(1);
         }
 
-        switch (args.length)
-        {
-            case 2:
-                    timeoutSleep   = Integer.parseInt(args[1]);
-                    timeoutReceive = timeoutSleep;
-                    break;
-            case 3:
-                    timeoutSleep   = Integer.parseInt(args[1]);
-                    timeoutReceive = Integer.parseInt(args[2]);
-                    break;
-            default: break;
-        }
+        if (args.length >= 2) timeoutSleep   = Integer.parseInt(args[1]);
+        if (args.length >= 3) timeoutReceive = Integer.parseInt(args[2]);
+        if (args.length >= 4) username       = args[3];
+        if (args.length >= 5) password       = args[4];
 
         System.out.println("Parametros:");
         System.out.println("\t - topic:           " + args[0]);
         System.out.println("\t - timeout-sleep:   " + timeoutSleep);
         System.out.println("\t - timeout-receive: " + timeoutReceive);
+        System.out.println("\t - username:        " + username);
+        System.out.println("\t - password:        " + password);
 
         try
         {
@@ -67,7 +63,7 @@ public class AMQPTopicConsumer {
             final javax.jms.ConnectionFactory cf = new JmsConnectionFactory(URI_AMQ);
 
             //2.- Crea una conexion JMS
-            c = cf.createConnection();
+            c = cf.createConnection(username, password);
 
             c.start();
 
