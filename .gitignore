@@ -4,3 +4,4 @@
 /topicDurableConsumer/target/
 /topicSharedDurableConsumer/target/
 /topicAMQPConsumer/target/
+/amqBrowser/target/

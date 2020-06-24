@@ -19,5 +19,6 @@
         <module>topicDurableConsumer</module>
         <module>topicSharedDurableConsumer</module>
         <module>topicAMQPConsumer</module>
+        <module>amqBrowser</module>
     </modules>
 </project>
