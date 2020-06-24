@@ -6,3 +6,4 @@
 /topicAMQPConsumer/target/
 /amqBrowser/target/
 /queueProducerTx/target/
+/queueConsumerTx/target/
