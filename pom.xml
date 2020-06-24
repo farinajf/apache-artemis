@@ -20,5 +20,6 @@
         <module>topicSharedDurableConsumer</module>
         <module>topicAMQPConsumer</module>
         <module>amqBrowser</module>
+        <module>queueProducerTx</module>
     </modules>
 </project>

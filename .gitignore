@@ -5,3 +5,4 @@
 /topicSharedDurableConsumer/target/
 /topicAMQPConsumer/target/
 /amqBrowser/target/
+/queueProducerTx/target/
