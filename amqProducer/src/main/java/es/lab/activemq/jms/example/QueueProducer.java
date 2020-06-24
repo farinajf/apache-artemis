@@ -60,8 +60,6 @@ public class QueueProducer {
             //2.- Crea una conexion JMS
             c = cf.createConnection(username, password);
 
-            c.start();
-
             //3.- Crea una sesion
             // createSession(transated, aknowledgwMode)
             final Session s = c.createSession(false, Session.AUTO_ACKNOWLEDGE);
