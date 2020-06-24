@@ -5,94 +5,162 @@
  */
 package es.lab.activemq.jms.example;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
 import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import org.apache.activemq.artemis.api.jms.ActiveMQJMSClient;
 import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
 
 /**
+ * (tcp://localhost:61616)?ha=true&retryInterval=1000&retryIntervalMultiplier=1.0&reconnectAttempts=-1
  *
  * @author fran
  */
-public class QueueConsumer {
-    private static final int _TIMEOUT_RECEIVE = 1000;
-    private static final int _TIMEOUT_SLEEP   = 1000;
+public class QueueConsumer implements Runnable {
+    private static final long _TIMEOUT_RECEIVE = 1000;
+    private static final long _TIMEOUT_SLEEP   = 1000;
+
+    final ConnectionFactory _cf;
+    final String            _queueName;
+    final String            _username;
+    final String            _password;
+    final long              _timeoutSleep;
+    final long              _timeoutReceive;
+
+    /***************************************************************************/
+    /*                         Metodos Privados                                */
+    /***************************************************************************/
+    private void _sleep() {
+        try
+        {
+            Thread.currentThread().sleep(_timeoutSleep);
+        }
+        catch (InterruptedException e) {}
+    }
 
     /**
      *
-     * @return
+     * @param session
+     * @param mc
      */
-    private static String _getURL() {
-        return "tcp://localhost:61616" + "?ha=true&retryInterval=1000&retryIntervalMultiplier=1.0&reconnectAttempts=-1";
-    }
-
-    public static void main(String[] args) throws Exception {
-        javax.jms.Connection c              = null;
-        String               username       = null;
-        String               password       = null;
-        int                  timeoutSleep   = _TIMEOUT_SLEEP;
-        int                  timeoutReceive = _TIMEOUT_RECEIVE;
-
-        if (args.length < 1)
-        {
-            System.err.println("Ejecuta: QueueConsumer <nombreCola> <timeoutSleep> <timeoutReceive> <username> <password>");
-            System.exit(1);
-        }
-
-        if (args.length >= 2) timeoutSleep   = Integer.parseInt(args[1]);
-        if (args.length >= 3) timeoutReceive = Integer.parseInt(args[2]);
-        if (args.length >= 4) username       = args[3];
-        if (args.length >= 5) password       = args[4];
-
-        System.out.println("Parametros:");
-        System.out.println("\t - cola:            " + args[0]);
-        System.out.println("\t - timeout-sleep:   " + timeoutSleep);
-        System.out.println("\t - timeout-receive: " + timeoutReceive);
-        System.out.println("\t - username:        " + username);
-        System.out.println("\t - password:        " + password);
+    private void _receive(final javax.jms.Session session, final javax.jms.MessageConsumer mc) {
 
         try
         {
-            //0.- Engancha con el destino
-            final Queue q = ActiveMQJMSClient.createQueue(args[0]);
+            final TextMessage message = (TextMessage) mc.receive(_timeoutReceive);
 
-            //1.- Creamos la Factoria de conexion
-            final String URI_AMQ = _getURL();
-            System.out.println("Conectando: " + URI_AMQ);
-            final ConnectionFactory cf = new ActiveMQJMSConnectionFactory(URI_AMQ);
+            if (message != null)
+            {
+                System.out.println("Recibido ------------> " + message.getText());
 
-            //2.- Crea una conexion JMS
-            c = cf.createConnection(username, password);
+                session.commit();
+            }
 
-            c.start();
+            _sleep();
+        }
+        catch (JMSException e)
+        {
+            try {session.rollback();} catch (JMSException ex) {}
 
-            //3.- Crea una sesion
-            // createSession(transated, aknowledgwMode)
-            final Session s = c.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            e.printStackTrace();
+        }
+    }
 
-            //4.- Crea un Consumidor
-            final MessageConsumer mc = s.createConsumer(q);
+    /***************************************************************************/
+    /*                         Metodos Protegidos                              */
+    /***************************************************************************/
 
+    /***************************************************************************/
+    /*                            Constructores                                */
+    /***************************************************************************/
+    /**
+     *
+     * @param cf
+     * @param queueName
+     * @param username
+     * @param password
+     * @param timeoutSleep
+     * @param timeoutReceive
+     */
+    public QueueConsumer(final ConnectionFactory cf, final String queueName, final String username, final String password, final long timeoutSleep, final long timeoutReceive) {
+        _cf             = cf;
+        _queueName      = queueName;
+        _username       = username;
+        _password       = password;
+        _timeoutSleep   = timeoutSleep;
+        _timeoutReceive = timeoutReceive;
+    }
+
+    /***************************************************************************/
+    /*                         Metodos Publicos                                */
+    /***************************************************************************/
+    @Override
+    public void run() {
+        javax.jms.Connection connection = null;
+        javax.jms.Session    session    = null;
+
+        try
+        {
+            //1.- Crea una conexion JMS
+            connection = _cf.createConnection(_username, _password);
+
+            //2.- Crea una sesion
+            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+
+            //3.- Se crea el destino
+            Queue queue = session.createQueue(_queueName);
+
+            //4.- Crea el consumidor
+            final MessageConsumer mc = session.createConsumer(queue);
+
+            //5.- Inicia la conexion
+            connection.start();
+
+            //6.- Consumimod mensajes
             while (true)
             {
-                //5.- Recibe el mensaje
-                final TextMessage m = (TextMessage) mc.receive(timeoutReceive);
-
-                if (m != null) System.out.println("Recibido ------------> " + m.getText());
-                else
-                {
-                    System.out.println("Recibido ------------> NULL.");
-                }
-
-                Thread.currentThread().sleep(timeoutSleep);
+                _receive(session, mc);
             }
         }
+        catch (JMSException e) {e.printStackTrace();}
         finally
         {
-            if (c!= null) c.close();
+            try {if (session    != null) session.close();}    catch (JMSException e) {}
+            try {if (connection != null) connection.close();} catch (JMSException e) {}
         }
+    }
+
+    /**
+     *
+     * @param args
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        if (args.length < 4)
+        {
+            System.err.println("Ejecuta: QueueConsumer <url> <nombreCola> <username> <password> <timeoutSleep en seg> <timeoutReceive en seg> <threadNumber>");
+            System.exit(1);
+        }
+
+        final String url            = args[0];
+        final String queueName      = args[1];
+        final String username       = args[2];
+        final String password       = args[3];
+        final long   timeoutSleep   = (args.length < 5) ? _TIMEOUT_SLEEP   : Integer.parseInt(args[4]) * 1000L;
+        final long   timeoutReceive = (args.length < 6) ? _TIMEOUT_RECEIVE : Integer.parseInt(args[5]) * 1000L;
+        final int    threadNumber   = (args.length < 7) ? 1                : Integer.parseInt(args[6]);
+
+
+        final ConnectionFactory cf = new ActiveMQJMSConnectionFactory(url);
+
+        final List<Thread> lista = new ArrayList<>();
+
+        for (int i = 0; i < threadNumber; i++) lista.add(new Thread(new QueueConsumer(cf, queueName, username, password, timeoutSleep, timeoutReceive)));
+
+        for (int i = 0; i < threadNumber; i++) lista.get(i).start();
     }
 }
