@@ -28,7 +28,7 @@ public class TopicProducer {
 
         if (args.length < 4)
         {
-            System.err.println("\t Ejecuta: TopicProducer <url> <nombreTopic> <username> <password> <numMensajes> <timeout-ms>");
+            System.err.println("\t Ejecuta: TopicProducer <url> <nombreTopic> <username> <password> <numMensajes> <timeout (s)>");
             System.exit(1);
         }
 

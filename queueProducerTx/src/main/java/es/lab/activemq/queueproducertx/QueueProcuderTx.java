@@ -46,22 +46,24 @@ public class QueueProcuderTx {
 
         if (args.length < 4)
         {
-            System.err.println("\t Ejecuta: QueueProcuderTx <url> <nombreCola> <username> <password> <numMensajes> <timeout-s>");
+            System.err.println("\t Ejecuta: QueueProcuderTx <url> <nombreCola> <username> <password> <numMensajes> <timeout (s)> <expirity (s)");
             System.exit(1);
         }
 
-        final String url            = args[0];
-        final String queueName      = args[1];
-        final String username       = args[2];
-        final String password       = args[3];
-        final int    numMensajes    = (args.length > 4) ? Integer.parseInt(args[4]) : 1;
-        final long   timeout        = (args.length > 5) ? Integer.parseInt(args[5]) * 1000 : _TIMEOUT;
+        final String url             = args[0];
+        final String queueName       = args[1];
+        final String username        = args[2];
+        final String password        = args[3];
+        final int    numMensajes     = (args.length > 4) ? Integer.parseInt(args[4]) : 1;
+        final long   timeout         = (args.length > 5) ? Integer.parseInt(args[5]) * 1000 : _TIMEOUT;
+        final long   expirityTimeout = (args.length > 6) ? Integer.parseInt(args[6]) * 1000 : -1;
 
         System.out.println("Parametros:");
         System.out.println("\t - Conectando   : " + url);
         System.out.println("\t - cola         : " + queueName);
         System.out.println("\t - num. mensajes: " + numMensajes);
         System.out.println("\t - timeout (ms):  " + timeout);
+        System.out.println("\t - expirity (ms): " + expirityTimeout);
         System.out.println("\t - username:      " + username);
         System.out.println("\t - password:      " + password);
 
@@ -82,20 +84,23 @@ public class QueueProcuderTx {
             //4.- Crea un Productor
             final MessageProducer p = s.createProducer(q);
 
+            //5.- Establecemos el tiempo de vida del mensaje
+            if (expirityTimeout > 0) p.setTimeToLive(expirityTimeout);
+
             for (int i = 0; i < numMensajes; i++)
             {
-                //5.- Crea el mensaje de texto
+                //6.- Crea el mensaje de texto
                 final TextMessage m = s.createTextMessage("Mensaje " + i + ".");
 
                 System.out.println("Enviando ------------> " + m.getText());
 
-                //6 Envia el mensaje
+                //7 Envia el mensaje
                 p.send(m);
 
                 Thread.currentThread().sleep(timeout);
             }
 
-            //7.- Commit
+            //8.- Commit
             s.commit();
             //s.rollback();
         }

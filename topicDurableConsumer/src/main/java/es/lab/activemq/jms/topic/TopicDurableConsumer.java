@@ -55,6 +55,7 @@ public class TopicDurableConsumer implements Runnable {
             if (message != null)
             {
                 System.out.println("Th-" + Thread.currentThread().getId() + " Recibido ------------> " + message.getText());
+                session.commit();
             }
             else
             {
@@ -124,7 +125,7 @@ public class TopicDurableConsumer implements Runnable {
             connection.setClientID(_clientId);
 
             //3.- Crea una sesion
-            session = connection.createSession(javax.jms.Session.AUTO_ACKNOWLEDGE);
+            session = connection.createSession(javax.jms.Session.SESSION_TRANSACTED);
 
             //4.- Crea un Consumidor
             topicSubscriber = session.createDurableSubscriber(t, _subscriptionName);

@@ -7,6 +7,7 @@
 package es.lab.activemq.queueconsumertx;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
@@ -55,7 +56,7 @@ public class QueueConsumerTx implements Runnable {
 
             if (message != null)
             {
-                System.out.println("Recibido ------------> " + message.getText());
+                System.out.println("(" + new Date() + ") " + Thread.currentThread().getName() +  " Recibido ------------> " + message.getText());
 
                 session.commit();
                 //session.rollback();
@@ -143,7 +144,7 @@ public class QueueConsumerTx implements Runnable {
     public static void main(String[] args) throws Exception {
         if (args.length < 4)
         {
-            System.err.println("Ejecuta: QueueConsumer <url> <nombreCola> <username> <password> <timeoutSleep en seg> <timeoutReceive en seg> <threadNumber>");
+            System.err.println("Ejecuta: QueueConsumer <url> <nombreCola> <username> <password> <timeoutSleep (s)> <timeoutReceive (s)> <threadNumber>");
             System.exit(1);
         }
 
