@@ -155,7 +155,6 @@ public class QueueConsumerTx implements Runnable {
         final long   timeoutReceive = (args.length < 6) ? _TIMEOUT_RECEIVE : Integer.parseInt(args[5]) * 1000L;
         final int    threadNumber   = (args.length < 7) ? 1                : Integer.parseInt(args[6]);
 
-
         final ConnectionFactory cf = new ActiveMQJMSConnectionFactory(url);
 
         final List<Thread> lista = new ArrayList<>();
