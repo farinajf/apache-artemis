@@ -4,12 +4,17 @@
  * and open the template in the editor.
  */
 
-package es.lab.activemq.queueproducertx;
+package es.lab.activemq.queueproducerasync;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import javax.jms.CompletionListener;
 import javax.jms.ConnectionFactory;
-import javax.jms.MessageProducer;
+import javax.jms.JMSContext;
+import javax.jms.JMSException;
+import javax.jms.JMSProducer;
+import javax.jms.Message;
 import javax.jms.Queue;
-import javax.jms.Session;
 import javax.jms.TextMessage;
 import org.apache.activemq.artemis.api.jms.ActiveMQJMSClient;
 import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
@@ -18,7 +23,7 @@ import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
  *
  * @author fran
  */
-public class QueueProcuderTx {
+public class QueueProducerAsync {
     private static final long _TIMEOUT = 1000;
 
     /***************************************************************************/
@@ -42,11 +47,11 @@ public class QueueProcuderTx {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-        javax.jms.Connection c = null;
+        JMSContext context = null;
 
         if (args.length < 4)
         {
-            System.err.println("\t Ejecuta: QueueProcuderTx <url> <nombreCola> <username> <password> <numMensajes> <timeout (s)> <expirity (s)");
+            System.err.println("\t Ejecuta: QueueProducerAsync <url> <nombreCola> <username> <password> <numMensajes> <timeout (s)>");
             System.exit(1);
         }
 
@@ -56,14 +61,12 @@ public class QueueProcuderTx {
         final String password        = args[3];
         final int    numMensajes     = (args.length > 4) ? Integer.parseInt(args[4]) : 1;
         final long   timeout         = (args.length > 5) ? Integer.parseInt(args[5]) * 1000 : _TIMEOUT;
-        final long   expirityTimeout = (args.length > 6) ? Integer.parseInt(args[6]) * 1000 : -1;
 
         System.out.println("Parametros:");
         System.out.println("\t - Conectando   : " + url);
         System.out.println("\t - cola         : " + queueName);
         System.out.println("\t - num. mensajes: " + numMensajes);
         System.out.println("\t - timeout (ms):  " + timeout);
-        System.out.println("\t - expirity (ms): " + expirityTimeout);
         System.out.println("\t - username:      " + username);
         System.out.println("\t - password:      " + password);
 
@@ -75,38 +78,60 @@ public class QueueProcuderTx {
             //1.- Creamos la Factoria de conexion
             final ConnectionFactory cf = new ActiveMQJMSConnectionFactory(url);
 
-            //2.- Crea una conexion JMS
-            c = cf.createConnection(username, password);
+            //2.- Crea un contexto JMS
+            context = cf.createContext(username, password, JMSContext.SESSION_TRANSACTED);
 
-            //3.- Crea una sesion
-            final Session s = c.createSession(Session.SESSION_TRANSACTED);
+            //3.- Crea un productor
+            final JMSProducer p = context.createProducer();
 
-            //4.- Crea un Productor
-            final MessageProducer p = s.createProducer(q);
+            //4.- Establecemos el listener
+            p.setAsync(new CompletionListener() {
+                @Override
+                public void onCompletion(final Message msg) {
+                    try
+                    {
+                        System.out.println("ACK: " + msg.getJMSMessageID() + "|" + msg.getJMSCorrelationID());
+                    }
+                    catch (JMSException e) {e.printStackTrace();}
+                }
 
-            //5.- Establecemos el tiempo de vida del mensaje
-            if (expirityTimeout > 0) p.setTimeToLive(expirityTimeout);
+                @Override
+                public void onException(final Message msg, final Exception e) {
+                    e.printStackTrace();
+
+                    try
+                    {
+                        if (msg != null) System.out.println("Rollback: " + msg.getJMSMessageID() + "|" + msg.getJMSCorrelationID());
+                    }
+                    catch (JMSException ex) {ex.printStackTrace();}
+                }
+            });
 
             for (int i = 0; i < numMensajes; i++)
             {
-                //6.- Crea el mensaje de texto
-                final TextMessage m = s.createTextMessage("Mensaje " + i + ".");
+                //5.-
+                final CountDownLatch latch = new CountDownLatch(i);
 
-                System.out.println("Enviando ------------> " + m.getText());
+                //6.- Crea el mensaje de texto
+                final TextMessage m = context.createTextMessage("Mensaje " + i + ".");
+
+                System.out.println("Enviando ------------> " + m.getJMSMessageID() + "|" + m.getJMSCorrelationID() + ": " + m.getText());
 
                 //7.- Envia el mensaje
-                p.send(m);
+                p.send(q, m);
 
-                Thread.currentThread().sleep(timeout);
+                //8.- Esperamos por el listener
+                if (!latch.await(timeout, TimeUnit.MILLISECONDS)) throw new IllegalStateException("Completion listener not called as expected.");
+
+                //9.- Commit;
+                context.commit();
+
+                Thread.sleep(timeout);
             }
-
-            //8.- Commit
-            s.commit();
-            //s.rollback();
         }
         finally
         {
-            if (c != null) c.close();
+            if (context != null) context.close();
         }
     }
 }

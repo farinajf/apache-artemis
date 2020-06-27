@@ -22,5 +22,6 @@
         <module>amqBrowser</module>
         <module>queueProducerTx</module>
         <module>queueConsumerTx</module>
+        <module>queueProducerAsync</module>
     </modules>
 </project>
