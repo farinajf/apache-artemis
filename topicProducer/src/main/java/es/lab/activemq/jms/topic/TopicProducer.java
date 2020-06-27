@@ -69,10 +69,10 @@ public class TopicProducer {
                 //5.- Crea el mensaje de texto
                 final TextMessage m = s.createTextMessage("Mensaje " + i + ".");
 
-                System.out.println("Enviando ------------> " + m.getText());
-
                 //6 Envia el mensaje
                 p.send(m);
+
+                System.out.println("Enviando ------------> " + m.getJMSMessageID() + "|" + m.getJMSCorrelationID() + ": " + m.getText());
 
                 Thread.currentThread().sleep(timeout);
             }

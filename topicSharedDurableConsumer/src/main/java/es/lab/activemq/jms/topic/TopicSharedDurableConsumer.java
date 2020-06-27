@@ -5,6 +5,14 @@
  */
 package es.lab.activemq.jms.topic;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSConsumer;
+import javax.jms.JMSContext;
+import javax.jms.JMSException;
+import javax.jms.Message;
 import javax.jms.TextMessage;
 import org.apache.activemq.artemis.api.jms.ActiveMQJMSClient;
 import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
@@ -13,16 +21,129 @@ import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
  *
  * @author fran
  */
-public class TopicSharedDurableConsumer {
+public class TopicSharedDurableConsumer implements Runnable {
     private static final int _TIMEOUT_RECEIVE = 1000;
     private static final int _TIMEOUT_SLEEP   = 1000;
 
+    final ConnectionFactory _cf;
+    final String            _topicName;
+    final String            _subscriptionName;
+    final String            _username;
+    final String            _password;
+    final long              _timeoutSleep;
+    final long              _timeoutReceive;
+
+    /***************************************************************************/
+    /*                         Metodos Privados                                */
+    /***************************************************************************/
+    private void _sleep() {
+        try
+        {
+            Thread.currentThread().sleep(_timeoutSleep);
+        }
+        catch (InterruptedException e) {}
+    }
+
     /**
      *
+     * @param m
      * @return
+     * @throws JMSException
      */
-    private static String _getURL() {
-        return "tcp://localhost:61616" + "?ha=true&retryInterval=1000&retryIntervalMultiplier=1.0&reconnectAttempts=-1";
+    private String _getText(final Message m) throws JMSException {
+        return "(" + new Date() + ") " + Thread.currentThread().getName() +  " Recibido ------------> " + m.getJMSMessageID() + "|" + m.getJMSCorrelationID() + ": " + m.getBody(String.class);
+    }
+
+    /**
+     *
+     * @param context
+     * @param consumer
+     */
+    private void _receive(final javax.jms.JMSContext context, final javax.jms.JMSConsumer consumer) {
+        try
+        {
+            final Message m = (TextMessage) consumer.receive(_timeoutReceive);
+
+            if (m != null)
+            {
+                System.out.println(_getText(m));
+
+                context.commit();
+            }
+
+            _sleep();
+        }
+        catch (JMSException e)
+        {
+            context.rollback();
+
+            e.printStackTrace();
+        }
+    }
+
+    /***************************************************************************/
+    /*                         Metodos Protegidos                              */
+    /***************************************************************************/
+
+    /***************************************************************************/
+    /*                            Constructores                                */
+    /***************************************************************************/
+    /**
+     *
+     * @param cf
+     * @param topicName
+     * @param subscriptionName
+     * @param username
+     * @param password
+     * @param timeoutSleep
+     * @param timeoutReceive
+     */
+    public TopicSharedDurableConsumer(final ConnectionFactory cf,
+                                      final String            topicName,
+                                      final String            subscriptionName,
+                                      final String            username,
+                                      final String            password,
+                                      final long              timeoutSleep,
+                                      final long              timeoutReceive) {
+        _cf               = cf;
+        _topicName        = topicName;
+        _subscriptionName = subscriptionName;
+        _username         = username;
+        _password         = password;
+        _timeoutSleep     = timeoutSleep;
+        _timeoutReceive   = timeoutReceive;
+    }
+
+    /***************************************************************************/
+    /*                         Metodos Publicos                                */
+    /***************************************************************************/
+    @Override
+    public void run() {
+        javax.jms.JMSContext context = null;
+
+        try
+        {
+            //0.- Engancha con el destino
+            final javax.jms.Topic t = ActiveMQJMSClient.createTopic(_topicName);
+
+            //1.- Crea un contexto JMS
+            context = _cf.createContext(_username, _username, JMSContext.SESSION_TRANSACTED);
+
+            //2.- Crea un suscriptor
+            final JMSConsumer topicSubscriber = context.createSharedDurableConsumer(t, _subscriptionName);
+
+            //3.- Session start
+            context.start();
+
+            //4.- Receive
+            while (true) _receive(context, topicSubscriber);
+        }
+        finally
+        {
+            if (context != null) context.stop();
+            if (context != null) context.unsubscribe(_subscriptionName);
+            if (context != null) context.close();
+        }
     }
 
     /**
@@ -31,25 +152,21 @@ public class TopicSharedDurableConsumer {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-        javax.jms.Connection      c              = null;
-        javax.jms.MessageConsumer mc             = null;
-        String                    username       = null;
-        String                    password       = null;
-        int                       timeoutSleep   = _TIMEOUT_SLEEP;
-        int                       timeoutReceive = _TIMEOUT_RECEIVE;
-
-        if (args.length < 2)
+        if (args.length < 6)
         {
-            System.err.println("Ejecuta: TopicSharedDurableConsumer <nombreTopic> <subscriptionName> <timeoutSleep> <timeoutReceive> <username> <password>");
+            System.err.println("Ejecuta: TopicSharedDurableConsumer <url> <nombreTopic> <subscriptionName> "
+                             + "<username> <password> <timeoutSleep (s)> <timeoutReceive (s)> <threadNumber>");
             System.exit(1);
         }
 
-        final String subscriptionName = args[1];
-
-        if (args.length >= 3) timeoutSleep   = Integer.parseInt(args[2]);
-        if (args.length >= 4) timeoutReceive = Integer.parseInt(args[3]);
-        if (args.length >= 5) username       = args[4];
-        if (args.length >= 6) password       = args[5];
+        final String url              = args[0];
+        final String topicName        = args[1];
+        final String subscriptionName = args[2];
+        final String username         = args[3];
+        final String password         = args[4];
+        final long   timeoutSleep     = (args.length < 6) ? _TIMEOUT_SLEEP   : Integer.parseInt(args[5]) * 1000L;
+        final long   timeoutReceive   = (args.length < 7) ? _TIMEOUT_RECEIVE : Integer.parseInt(args[6]) * 1000L;
+        final int    threadNumber     = (args.length < 8) ? 1                : Integer.parseInt(args[7]);
 
         System.out.println("Parametros:");
         System.out.println("\t - topic:            " + args[0]);
@@ -59,49 +176,18 @@ public class TopicSharedDurableConsumer {
         System.out.println("\t - username:         " + username);
         System.out.println("\t - password:         " + password);
 
-        try
-        {
-            //0.- Engancha con el destino
-            final javax.jms.Topic t = ActiveMQJMSClient.createTopic(args[0]);
+        final ConnectionFactory cf = new ActiveMQJMSConnectionFactory(url);
 
-            //1.- Creamos la Factoria de conexion
-            final String URI_AMQ = _getURL();
-            System.out.println("Conectando: " + URI_AMQ);
-            final javax.jms.ConnectionFactory cf = new ActiveMQJMSConnectionFactory(URI_AMQ);
+        final List<Thread> lista = new ArrayList<>();
 
-            //2.- Crea una conexion JMS
-            c = cf.createConnection(username, password);
+        for (int i = 0; i < threadNumber; i++) lista.add(new Thread(new TopicSharedDurableConsumer(cf,
+                                                                                                   topicName,
+                                                                                                   subscriptionName,
+                                                                                                   username,
+                                                                                                   password,
+                                                                                                   timeoutSleep,
+                                                                                                   timeoutReceive)));
 
-            //3.- Se establece el clientId de la conexion
-            //if (clientId != null) c.setClientID(clientId);
-
-            //4.- Se inicia la conexion
-            c.start();
-
-            //5.- Crea una sesion
-            final javax.jms.Session s = c.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE);
-
-            //6.- Crea un Consumidor
-            mc = s.createSharedDurableConsumer(t, subscriptionName);
-
-            while (true)
-            {
-                //7.- Recibe el mensaje
-                final javax.jms.TextMessage m = (TextMessage) mc.receive(timeoutReceive);
-
-                if (m != null) System.out.println("Recibido ------------> " + m.getText());
-                else
-                {
-                    System.out.println("Recibido ------------> NULL.");
-                }
-
-                Thread.currentThread().sleep(timeoutSleep);
-            }
-        }
-        finally
-        {
-            if (mc != null) mc.close();
-            if (c  != null) c.close();
-        }
+        for (int i = 0; i < threadNumber; i++) lista.get(i).start();
     }
 }
