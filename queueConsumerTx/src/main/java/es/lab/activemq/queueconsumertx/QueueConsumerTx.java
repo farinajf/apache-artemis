@@ -10,10 +10,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.jms.ConnectionFactory;
+import javax.jms.JMSConsumer;
+import javax.jms.JMSContext;
 import javax.jms.JMSException;
-import javax.jms.MessageConsumer;
+import javax.jms.Message;
 import javax.jms.Queue;
-import javax.jms.Session;
 import javax.jms.TextMessage;
 import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
 
@@ -45,28 +46,37 @@ public class QueueConsumerTx implements Runnable {
 
     /**
      *
-     * @param session
-     * @param mc
+     * @param m
+     * @return
+     * @throws JMSException
      */
-    private void _receive(final javax.jms.Session session, final javax.jms.MessageConsumer mc) {
+    private String _getText(final Message m) throws JMSException {
+        return "(" + new Date() + ") " + Thread.currentThread().getName() +  " Recibido ------------> " + m.getJMSMessageID() + "|" + m.getJMSCorrelationID() + ": " + m.getBody(String.class);
+    }
+
+    /**
+     *
+     * @param context
+     * @param consumer
+     */
+    private void _receive(final javax.jms.JMSContext context, final javax.jms.JMSConsumer consumer) {
 
         try
         {
-            final TextMessage message = (TextMessage) mc.receive(_timeoutReceive);
+            final Message m = (TextMessage) consumer.receive(_timeoutReceive);
 
-            if (message != null)
+            if (m != null)
             {
-                System.out.println("(" + new Date() + ") " + Thread.currentThread().getName() +  " Recibido ------------> " + message.getText());
+                System.out.println(_getText(m));
 
-                session.commit();
-                //session.rollback();
+                context.commit();
             }
 
             _sleep();
         }
         catch (JMSException e)
         {
-            try {session.rollback();} catch (JMSException ex) {}
+            context.rollback();
 
             e.printStackTrace();
         }
@@ -102,37 +112,32 @@ public class QueueConsumerTx implements Runnable {
     /***************************************************************************/
     @Override
     public void run() {
-        javax.jms.Connection connection = null;
-        javax.jms.Session    session    = null;
+        javax.jms.JMSContext context = null;
 
         try
         {
-            //1.- Crea una conexion JMS
-            connection = _cf.createConnection(_username, _password);
+            //1.- Crea un contexto JMS
+            context = _cf.createContext(_username, _password, JMSContext.SESSION_TRANSACTED);
 
-            //2.- Crea una sesion
-            session = connection.createSession(Session.SESSION_TRANSACTED);
+            //2.- Se crea el destino
+            Queue queue = context.createQueue(_queueName);
 
-            //3.- Se crea el destino
-            Queue queue = session.createQueue(_queueName);
+            //3.- Crea el consumidor
+            final JMSConsumer consumer = context.createConsumer(queue);
 
-            //4.- Crea el consumidor
-            final MessageConsumer mc = session.createConsumer(queue);
+            //4.- Inicia la conexion
+            context.start();
 
-            //5.- Inicia la conexion
-            connection.start();
-
-            //6.- Consumimos mensajes
+            //5.- Consumimos mensajes
             while (true)
             {
-                _receive(session, mc);
+                _receive(context, consumer);
             }
         }
-        catch (JMSException e) {e.printStackTrace();}
         finally
         {
-            try {if (session    != null) session.close();}    catch (JMSException e) {}
-            try {if (connection != null) connection.close();} catch (JMSException e) {}
+            if (context != null) context.stop();
+            if (context != null) context.close();
         }
     }
 

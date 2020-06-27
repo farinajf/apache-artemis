@@ -7,9 +7,10 @@
 package es.lab.activemq.queueproducertx;
 
 import javax.jms.ConnectionFactory;
-import javax.jms.MessageProducer;
+import javax.jms.DeliveryMode;
+import javax.jms.JMSContext;
+import javax.jms.JMSProducer;
 import javax.jms.Queue;
-import javax.jms.Session;
 import javax.jms.TextMessage;
 import org.apache.activemq.artemis.api.jms.ActiveMQJMSClient;
 import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
@@ -42,7 +43,7 @@ public class QueueProcuderTx {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-        javax.jms.Connection c = null;
+        javax.jms.JMSContext c = null;
 
         if (args.length < 4)
         {
@@ -75,33 +76,32 @@ public class QueueProcuderTx {
             //1.- Creamos la Factoria de conexion
             final ConnectionFactory cf = new ActiveMQJMSConnectionFactory(url);
 
-            //2.- Crea una conexion JMS
-            c = cf.createConnection(username, password);
-
-            //3.- Crea una sesion
-            final Session s = c.createSession(Session.SESSION_TRANSACTED);
+            //2.- Crea un contexto JMS
+            c = cf.createContext(username, password, JMSContext.SESSION_TRANSACTED);
 
             //4.- Crea un Productor
-            final MessageProducer p = s.createProducer(q);
+            final JMSProducer p = c.createProducer();
 
             //5.- Establecemos el tiempo de vida del mensaje
             if (expirityTimeout > 0) p.setTimeToLive(expirityTimeout);
 
+            p.setDeliveryMode(DeliveryMode.PERSISTENT);
+
             for (int i = 0; i < numMensajes; i++)
             {
                 //6.- Crea el mensaje de texto
-                final TextMessage m = s.createTextMessage("Mensaje " + i + ".");
-
-                System.out.println("Enviando ------------> " + m.getText());
+                final TextMessage m = c.createTextMessage("Mensaje " + i + ".");
 
                 //7.- Envia el mensaje
-                p.send(m);
+                p.send(q, m);
+
+                System.out.println("Enviando ------------> " + m.getJMSMessageID() + "|" + m.getJMSCorrelationID() + ": " + m.getText());
 
                 Thread.currentThread().sleep(timeout);
             }
 
             //8.- Commit
-            s.commit();
+            c.commit();
             //s.rollback();
         }
         finally
