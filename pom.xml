@@ -23,5 +23,7 @@
         <module>queueProducerTx</module>
         <module>queueConsumerTx</module>
         <module>queueProducerAsync</module>
+        <module>amqReplier</module>
+        <module>amqRequester</module>
     </modules>
 </project>

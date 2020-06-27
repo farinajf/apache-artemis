@@ -8,3 +8,5 @@
 /queueProducerTx/target/
 /queueConsumerTx/target/
 /queueProducerAsync/target/
+/amqReplier/target/
+/amqRequester/target/
